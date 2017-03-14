@@ -1,0 +1,63 @@
+<script
+  src="https://code.jquery.com/jquery-3.1.1.min.js"
+  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+  crossorigin="anonymous"></script>
+<script type="text/javascript">
+
+// state -> resolved -> done
+//       -> rejected -> fail
+
+function delayHello() {
+    var d = new $.Deferred;
+    setTimeout(() => {
+        console.log("hello!");
+        d.resolve();
+    }, 1000);
+    return d.promise();
+}
+
+function delayError() {
+    var d = new $.Deferred;
+    setTimeout(()=> {
+        d.reject("Error!!");
+    }, 1000);
+    return d.promise();
+}
+
+function hello1() {
+    console.log("hello sync1");
+}
+
+function hello2() {
+    console.log("hello sync2");
+}
+
+var promise = delayHello();
+promise.done(() => {});
+promise.fail((e) => {});
+
+delayHello() // promise -> resolve -> done -> then -> promise -> done 
+.then(hello1, hello2);
+
+delayError() //-> reject
+.then(hello1) //-> rejectリレー
+.then(hello1) //-> rejectリレー
+.fail((e) => {
+    console.log(e);
+    console.log("エラー処理をしました");
+});
+
+
+delayError() //-> reject
+.then(hello1,(e) => {
+    console.log(e);
+    console.log("エラーから回復しました");
+    return new $.Deferred().resolve().promise();
+}) //->resolve
+.then(hello1, hello2);
+
+// promise:state AND promise:state AND ...
+$.when(delayHello(), delayHello(), delayHello())
+.done(hello1);
+
+</script>
